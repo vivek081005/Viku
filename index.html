@@ -450,6 +450,13 @@
 
       // HOST SIDE: Waiting for friend to connect
       peer.on('connection', (c) => {
+        if (conn && conn.open) {
+          c.on('open', () => {
+            c.send({cmd: 'ROOM_FULL'});
+            setTimeout(() => c.close(), 300);
+          });
+          return;
+        }
         conn = c;
         c.on('data', (d) => {
           // PING-PONG HANDSHAKE
@@ -526,6 +533,12 @@
 
     // B) FRIEND: Join Room (With Auto-Timeout for Network Blocks)
     function connectFriend() {
+      if(d.cmd === 'ROOM_FULL') {
+        clearTimeout(connectionTimeout);
+        alert('Room Full!');
+        leaveRoom();
+        return;
+      }
       const pin = document.getElementById('friendPin').value.trim();
       if (!pin || pin.length < 5) return alert('Enter valid 5-digit PIN');
       
