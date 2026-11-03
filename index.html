@@ -173,6 +173,85 @@
       .chat-logs { flex: 1; height: auto; min-height: 250px; }
       .chat-watermark { font-size: 90px; }
     }
+        /* EMOJI & STICKER PICKER (LAPTOP ONLY) */
+    .emoji-btn {
+      display: none; /* Hidden on mobile devices */
+      background: #f8fafc;
+      border: 1.5px solid var(--border);
+      color: #475569;
+      padding: 0 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+    .emoji-btn:hover { background: #f1f5f9; color: var(--primary); }
+
+    @media (min-width: 850px) {
+      .emoji-btn { display: flex; } /* Visible only on laptop and desktop */
+    }
+    @media (max-width: 849px) {
+      .emoji-picker { display: none !important; }
+    }
+
+    .emoji-picker {
+      position: absolute;
+      bottom: 48px;
+      left: 0;
+      width: 280px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+      padding: 10px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
+    }
+    .emoji-picker.show { display: flex; }
+
+    .emoji-search {
+      width: 100%;
+      padding: 7px 12px;
+      font-size: 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: #f1f5f9;
+      outline: none;
+    }
+    .emoji-scroll {
+      max-height: 190px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 2px;
+    }
+    .emoji-cat-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .emoji-item {
+      font-size: 20px;
+      padding: 4px;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: transform 0.1s ease, background 0.1s ease;
+      user-select: none;
+    }
+    .emoji-item:hover {
+      background: #f1f5f9;
+      transform: scale(1.18);
+    }
   </style>
 </head>
 <body>
@@ -299,7 +378,33 @@
       </div>
     </div>
   </div>
+  <div class="row">
+            <!-- Emoji & Sticker Popup -->
+            <div id="emojiPicker" class="emoji-picker">
+              <input id="emojiSearch" class="emoji-search" placeholder="🔍 Search emoji..." oninput="filterEmojis(this.value)" autocomplete="off" />
+              <div class="emoji-scroll">
+                <div id="recentEmojiWrap" style="display: none;">
+                  <div class="emoji-cat-title">Recently Used</div>
+                  <div id="recentEmojiGrid" class="emoji-grid"></div>
+                </div>
+                <div class="emoji-cat-title">Smileys & People</div>
+                <div id="mainEmojiGrid" class="emoji-grid"></div>
+              </div>
+            </div>
 
+            <!-- Emoji Button (Laptop Only) -->
+            <button type="button" class="emoji-btn" onclick="toggleEmojiPicker(event)" title="Emojis">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+              </svg>
+            </button>
+
+            <input id="chatInput" placeholder="Send a message..." autocomplete="off" onkeydown="if(event.key==='Enter') sendChat()" />
+            <button onclick="sendChat()">Send</button>
+  </div>                
   <script>
     let player = null, peer = null, conn = null, currentVid = null;
     let suggestTimer = null, toastTimer = null, connectionTimeout = null;
@@ -743,6 +848,103 @@
       }
       setTimeout(initYouTubePlayer, 300);
     };
+        // --- EMOJI & STICKER PICKER LOGIC ---
+    const EMOJI_LIST = [
+      { e: '😂', k: 'laugh joy tear haha' }, { e: '🤣', k: 'rofl laugh rolling' },
+      { e: '❤️', k: 'love heart red' }, { e: '😍', k: 'love eyes crush' },
+      { e: '🥰', k: 'love hearts cute' }, { e: '😘', k: 'kiss love' },
+      { e: '😚', k: 'kissing closed eyes cute blush' }, { e: '💋', k: 'kiss mark lips love' },
+      { e: '😭', k: 'cry sad sob' }, { e: '🥺', k: 'pleading cute sad' },
+      { e: '🥹', k: 'holding tears happy' }, { e: '😅', k: 'sweat smile' },
+      { e: '🔥', k: 'fire hot lit' }, { e: '✨', k: 'sparkles magic' },
+      { e: '🫶', k: 'heart hands love' }, { e: '😁', k: 'grin happy' },
+      { e: '🫠', k: 'melting shy' }, { e: '🤭', k: 'giggle oops' },
+      { e: '🫡', k: 'salute respect' }, { e: '🤨', k: 'suspect doubt' },
+      { e: '😎', k: 'cool sunglasses' }, { e: '🥳', k: 'party celebrate' },
+      { e: '😡', k: 'angry mad' }, { e: '🤬', k: 'swear angry' },
+      { e: '😱', k: 'shock scream' }, { e: '😴', k: 'sleep tired' },
+      { e: '🤔', k: 'think hmm' }, { e: '🙄', k: 'eyeroll whatever' },
+      { e: '😒', k: 'unamused sad' }, { e: '😔', k: 'sad pensive' },
+      { e: '🤯', k: 'mindblown shock' }, { e: '🤩', k: 'starstruck wow' },
+      { e: '😜', k: 'wink crazy tongue' }, { e: '🤪', k: 'zany crazy' },
+      { e: '😇', k: 'angel innocent' }, { e: '💀', k: 'skull dead funny' },
+      { e: '👻', k: 'ghost spooky' }, { e: '👍', k: 'thumbs up ok' },
+      { e: '👎', k: 'thumbs down no' }, { e: '👏', k: 'clap bravo' },
+      { e: '🙌', k: 'hands celebration' }, { e: '🤝', k: 'deal handshake' },
+      { e: '🙏', k: 'pray please namaste' }, { e: '✌️', k: 'peace victory' },
+      { e: '🤞', k: 'fingers crossed luck' }, { e: '👀', k: 'eyes look' },
+      { e: '💔', k: 'broken heart sad' }, { e: '💯', k: '100 perfect' },
+      { e: '🎉', k: 'party popper' }, { e: '🎶', k: 'music song notes' },
+      { e: '🍿', k: 'popcorn movie watch' }
+    ];
+
+    let recentEmojis = ['😂', '❤️', '😚', '💋', '🔥', '🥺', '😍'];
+
+    function renderEmojis(filterText = '') {
+      const mainGrid = document.getElementById('mainEmojiGrid');
+      const recentWrap = document.getElementById('recentEmojiWrap');
+      const recentGrid = document.getElementById('recentEmojiGrid');
+      if (!mainGrid) return;
+
+      const q = filterText.toLowerCase().trim();
+
+      // Show or hide Recently Used section
+      if (!q && recentEmojis.length) {
+        recentWrap.style.display = 'block';
+        recentGrid.innerHTML = '';
+        recentEmojis.slice(0, 7).forEach(em => {
+          const span = document.createElement('span');
+          span.className = 'emoji-item';
+          span.innerText = em;
+          span.onclick = () => insertEmoji(em);
+          recentGrid.appendChild(span);
+        });
+      } else {
+        recentWrap.style.display = 'none';
+      }
+
+      // Render filtered emoji list
+      mainGrid.innerHTML = '';
+      EMOJI_LIST.filter(item => !q || item.k.includes(q) || item.e.includes(q)).forEach(item => {
+        const span = document.createElement('span');
+        span.className = 'emoji-item';
+        span.innerText = item.e;
+        span.onclick = () => insertEmoji(item.e);
+        mainGrid.appendChild(span);
+      });
+    }
+
+    function toggleEmojiPicker(e) {
+      e.stopPropagation();
+      const picker = document.getElementById('emojiPicker');
+      picker.classList.toggle('show');
+      if (picker.classList.contains('show')) {
+        document.getElementById('emojiSearch').value = '';
+        renderEmojis();
+      }
+    }
+
+    function filterEmojis(val) {
+      renderEmojis(val);
+    }
+
+    function insertEmoji(emoji) {
+      const input = document.getElementById('chatInput');
+      input.value += emoji;
+      input.focus();
+
+      // Update Recently Used list
+      recentEmojis = [emoji, ...recentEmojis.filter(e => e !== emoji)].slice(0, 7);
+      renderEmojis(document.getElementById('emojiSearch').value);
+    }
+
+    // Close emoji picker when clicking outside
+    document.addEventListener('click', (e) => {
+      const picker = document.getElementById('emojiPicker');
+      if (picker && !e.target.closest('#emojiPicker') && !e.target.closest('.emoji-btn')) {
+        picker.classList.remove('show');
+      }
+    });
   </script>
 </body>
 </html>
