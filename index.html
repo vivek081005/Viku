@@ -362,6 +362,7 @@
         </div>
 
         <!-- Chat Card -->
+                <!-- Chat Card -->
         <div class="card chat-card" id="chatCard">
           <div class="chat-header">
             <div class="title">Live Chat</div>
@@ -370,15 +371,9 @@
           <div id="chatLogs" class="chat-logs">
             <div class="chat-watermark">VIKU</div>
           </div>
+
+          <!-- Line 373 par yeh paste hona chahiye -->
           <div class="row">
-            <input id="chatInput" placeholder="Send a message..." autocomplete="off" onkeydown="if(event.key==='Enter') sendChat()" />
-            <button onclick="sendChat()">Send</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="row">
             <!-- Emoji & Sticker Popup -->
             <div id="emojiPicker" class="emoji-picker">
               <input id="emojiSearch" class="emoji-search" placeholder="🔍 Search emoji..." oninput="filterEmojis(this.value)" autocomplete="off" />
@@ -404,7 +399,14 @@
 
             <input id="chatInput" placeholder="Send a message..." autocomplete="off" onkeydown="if(event.key==='Enter') sendChat()" />
             <button onclick="sendChat()">Send</button>
-  </div>                
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
   <script>
     let player = null, peer = null, conn = null, currentVid = null;
     let suggestTimer = null, toastTimer = null, connectionTimeout = null;
