@@ -341,13 +341,14 @@
       .ttt-grid { max-width: 210px; gap: 8px; }
       .ttt-cell { font-size: 28px; }
     }
-    /* 1. 100% SOLID BLACK NOTIFICATIONS (FORCE OVERRIDE) */
-    div#toast, div.toast, .toast, .toast.error, .toast.warn, .toast-notification {
+    /* ALL NOTIFICATION COLOUR */
+    .toast-banner {
       background: #121212 !important;
       color: #ffffff !important;
       border: 1px solid #2d2d2d !important;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5) !important;
     }
+
 
     /* 2. ULTRA-SMOOTH FLOATING INSTAGRAM TYPING BUBBLE */
     .typing-bubble {
@@ -795,12 +796,14 @@
 
     function showToast(msg, isAlert = false) {
       const banner = document.getElementById('toastNotification');
+      if (!banner) return;
       document.getElementById('toastMsg').innerText = msg;
-      banner.className = 'toast-banner' + (isAlert ? ' alert' : '');
-      banner.classList.add('show');
+      banner.className = 'toast-banner show';
+      
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => { banner.classList.remove('show'); }, 3500);
     }
+
 
     window.addEventListener('pageshow', (e) => { if (e.persisted) document.getElementById('lobbyOverlay').style.display = 'flex'; });
     window.addEventListener('resize', () => { const th = document.getElementById('theaterRoom'); if (th.style.display !== 'none') th.style.display = window.innerWidth >= 850 ? 'grid' : 'flex'; });
