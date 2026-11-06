@@ -790,6 +790,20 @@
 
     // 4. Remote Command Handler
     function handleRemoteCommand(d) {
+        // Privacy and Tab Alerts
+      if (d.cmd === 'TAB_ALERT') { showToast('⚠️ Friend switched tabs!', true); return; }
+      if (d.cmd === 'SCREENSHOT_ALERT') { showToast('📸 Friend took a screenshot!', true); return; }
+      if (d.cmd === 'TAB_CLOSED') {
+        showToast('❌ Friend closed the tab!', true);
+        handleFriendDisconnect();
+        return;
+      }
+
+      // Couple Game Sync Commands
+      if (d.cmd === 'GAME_START') { startCoupleGame(false); return; }
+      if (d.cmd === 'GAME_MOVE') { applyRemoteMove(d.index, d.symbol); return; }
+      if (d.cmd === 'GAME_RESET') { resetCoupleGame(false); return; }
+      if (d.cmd === 'GAME_EXIT') { exitCoupleGame(false); return; }
       if (d.cmd === 'FRIEND_LEFT') { handleFriendDisconnect(); return; }
       if (d.cmd === 'MSG') { addMessage(d.text, 'them'); return; }
 
@@ -1065,21 +1079,7 @@
         picker.classList.remove('show');
       }
     });
-          // Privacy and Tab Alerts
-      if (d.cmd === 'TAB_ALERT') { showToast('⚠️ Friend switched tabs!', true); return; }
-      if (d.cmd === 'SCREENSHOT_ALERT') { showToast('📸 Friend took a screenshot!', true); return; }
-      if (d.cmd === 'TAB_CLOSED') {
-        showToast('❌ Friend closed the tab!', true);
-        handleFriendDisconnect();
-        return;
-      }
-
-      // Couple Game Sync Commands
-      if (d.cmd === 'GAME_START') { startCoupleGame(false); return; }
-      if (d.cmd === 'GAME_MOVE') { applyRemoteMove(d.index, d.symbol); return; }
-      if (d.cmd === 'GAME_RESET') { resetCoupleGame(false); return; }
-      if (d.cmd === 'GAME_EXIT') { exitCoupleGame(false); return; }
-        // --- COUPLE TIC-TAC-TOE (❤️ vs 💋) LOGIC ---
+    // --- COUPLE TIC-TAC-TOE (❤️ vs 💋) LOGIC ---
     let tttBoard = Array(9).fill('');
     let isMyTurn = false;
     let mySymbol = '❤️';
