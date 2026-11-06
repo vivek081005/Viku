@@ -341,7 +341,42 @@
       .ttt-grid { max-width: 210px; gap: 8px; }
       .ttt-cell { font-size: 28px; }
     }
-   
+       /* FORCE ALL TOAST NOTIFICATIONS TO SOLID BLACK */
+    #toast, .toast, .toast.error, .toast.warn {
+      background: #121212 !important;
+      color: #ffffff !important;
+      border: 1px solid #2d2d2d !important;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    /* TYPING BUBBLE */
+    .typing-bubble {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 14px !important;
+      width: fit-content;
+      align-self: flex-start;
+      margin-top: 4px;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      background-color: currentColor;
+      border-radius: 50%;
+      opacity: 0.5;
+      animation: instaBounce 1.4s infinite ease-in-out both;
+    }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    .typing-dot:nth-child(3) { animation-delay: 0s; }
+
+    @keyframes instaBounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40% { transform: translateY(-4px); opacity: 1; }
+                       }
+    
   </style>
 </head>
 <body>
@@ -454,7 +489,7 @@
         <!-- Chat Card -->
         <div class="card chat-card" id="chatCard">
           <div class="chat-header">
-            <div class="title" id="chatCardTitle">Live Chat</div>
+            <div class="title" id="chatCardTitle">Chat</div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <button type="button" id="openGameBtn" class="game-toggle-btn" onclick="startCoupleGame(true)">🎮 Play Game</button>
               <span style="font-size: 11px; color: #10b981; font-weight: 600;">● Active</span>
@@ -510,8 +545,7 @@
                 <line x1="15" y1="9" x2="15.01" y2="9"></line>
               </svg>
             </button>
-
-            <input id="chatInput" placeholder="Send a message..." autocomplete="off" onkeydown="if(event.key==='Enter') sendChat()" />
+            <input id="chatInput" placeholder="Send a message..." autocomplete="off" oninput="sendTypingSignal()" onkeydown="if(event.key==='Enter') sendChat()" />
             <button onclick="sendChat()">Send</button>
           </div>
         </div>
@@ -766,7 +800,7 @@
 
     function handleFriendDisconnect() {
       updateStatus('Solo', false);
-      showToast('⚠️ Friend has left the room', true);
+      showToast('Friend has left the room', true);
     }
 
     // 3. Play Video Engine
@@ -823,7 +857,9 @@
       if (d.cmd === 'GAME_EXIT') { exitCoupleGame(false); return; }
     
       if (d.cmd === 'FRIEND_LEFT') { handleFriendDisconnect(); return; }
-      if (d.cmd === 'MSG') { addMessage(d.text, 'them'); return; }
+      
+      if (d.cmd === 'TYPING') { showFriendTyping(); return; }
+      if (d.cmd === 'MSG') { hideFriendTyping(); addMessage(d.text, 'them'); return; }
 
       isRemoteAction = true;
 
@@ -1227,6 +1263,49 @@
         conn.send({ cmd: 'TAB_BACK' });
       }
     });
+    
+    // --- TYPING INDICATOR ---
+    let typingHideTimer = null;
+    let lastTypingSentTime = 0;
+
+    // Send typing signal only to friend when typing in input box
+    function sendTypingSignal() {
+      if (!conn || !conn.open) return;
+      const now = Date.now();
+      if (now - lastTypingSentTime > 900) {
+        conn.send({ cmd: 'TYPING' });
+        lastTypingSentTime = now;
+      }
+    }
+
+    // Show bouncing dots inside chatLogs for friend
+    function showFriendTyping() {
+      const box = document.getElementById('chatLogs');
+      if (!box) return;
+
+      let bubble = document.getElementById('friendTypingBubble');
+      if (!bubble) {
+        bubble = document.createElement('div');
+        bubble.id = 'friendTypingBubble';
+        bubble.className = 'msg them typing-bubble';
+        bubble.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+      }
+
+      // Keep typing bubble at the very bottom of chat
+      box.appendChild(bubble);
+      box.scrollTop = box.scrollHeight;
+
+      clearTimeout(typingHideTimer);
+      typingHideTimer = setTimeout(hideFriendTyping, 2200);
+    }
+
+    // Remove typing bubble when friend stops or sends message
+    function hideFriendTyping() {
+      clearTimeout(typingHideTimer);
+      const bubble = document.getElementById('friendTypingBubble');
+      if (bubble) bubble.remove();
+    }
+    
   </script>
 </body>
 </html>
