@@ -252,7 +252,7 @@
       background: #f1f5f9;
       transform: scale(1.18);
     }
-        /* COUPLE TIC-TAC-TOE GAME UI */
+    /* COUPLE TIC-TAC-TOE GAME UI */
     .game-toggle-btn {
       background: #fdf2f8;
       color: #db2777;
@@ -266,20 +266,20 @@
     }
     .game-toggle-btn:hover { background: #fce7f3; transform: scale(1.05); }
 
+    /* Mobile-first clean layout (No overlap) */
     .game-container {
       display: none;
       flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      height: 250px;
-      padding: 12px;
+      justify-content: center;
+      height: auto;
+      min-height: 270px;
+      gap: 12px;
+      padding: 14px 10px;
       background: linear-gradient(145deg, #fff1f2, #fdf2f8);
       border-radius: 12px;
       border: 1px solid #fbcfe8;
-    }
-
-    @media (min-width: 850px) {
-      .game-container { height: 400px; justify-content: center; gap: 18px; }
+      box-sizing: border-box;
     }
 
     .game-status {
@@ -290,14 +290,15 @@
       padding: 6px 14px;
       border-radius: 20px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      text-align: center;
     }
 
     .ttt-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      gap: 6px;
       width: 100%;
-      max-width: 210px;
+      max-width: 170px;
     }
 
     .ttt-cell {
@@ -305,7 +306,7 @@
       background: #ffffff;
       border: 2px solid #fbcfe8;
       border-radius: 12px;
-      font-size: 28px;
+      font-size: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -321,9 +322,10 @@
       gap: 10px;
       width: 100%;
       justify-content: center;
+      margin-top: 2px;
     }
     .game-action-btn {
-      padding: 6px 12px;
+      padding: 7px 14px;
       font-size: 11px;
       font-weight: 700;
       border-radius: 8px;
@@ -332,7 +334,14 @@
     }
     .btn-restart { background: #db2777; color: #ffffff; }
     .btn-exit-game { background: #e2e8f0; color: #334155; }
-    
+
+    /* Laptop UI stays exactly the same as before */
+    @media (min-width: 850px) {
+      .game-container { height: 400px; justify-content: center; gap: 18px; padding: 12px; }
+      .ttt-grid { max-width: 210px; gap: 8px; }
+      .ttt-cell { font-size: 28px; }
+    }
+   
   </style>
 </head>
 <body>
@@ -790,20 +799,35 @@
     // 4. Remote Command Handler
     function handleRemoteCommand(d) {
         // Privacy and Tab Alerts
-      if (d.cmd === 'TAB_ALERT') { showToast('⚠️ Friend switched tabs!', true); return; }
-      if (d.cmd === 'SCREENSHOT_ALERT') { showToast('📸 Friend took a screenshot!', true); return; }
+            // Tab and Screenshot Alerts
+      if (d.cmd === 'TAB_ALERT') {
+        window.tabSwitchTimer = setTimeout(() => {
+          showToast('Friend switched tabs!', true);
+        }, 800);
+        return;
+      }
+      if (d.cmd === 'TAB_BACK') {
+        clearTimeout(window.tabSwitchTimer);
+        showToast('Friend is back on the tab!');
+        return;
+      }
       if (d.cmd === 'TAB_CLOSED') {
-        showToast('❌ Friend closed the tab!', true);
+        clearTimeout(window.tabSwitchTimer);
+        showToast('Friend closed the tab!', true);
         handleFriendDisconnect();
+        return;
+      }
+      if (d.cmd === 'SCREENSHOT_ALERT') {
+        showToast('Friend took a screenshot!', true);
         return;
       }
 
       // Couple Game Sync Commands
-      if (d.cmd === 'GAME_START') { startCoupleGame(false); return; }
+      if (d.cmd === 'GAME_START') { startCoupleGame(false, d.hostStarts); return; }
       if (d.cmd === 'GAME_MOVE') { applyRemoteMove(d.index, d.symbol); return; }
-      if (d.cmd === 'GAME_RESET') { resetCoupleGame(false); return; }
+      if (d.cmd === 'GAME_RESET') { resetCoupleGame(false, d.hostStarts); return; }
       if (d.cmd === 'GAME_EXIT') { exitCoupleGame(false); return; }
-      
+    
       if (d.cmd === 'FRIEND_LEFT') { handleFriendDisconnect(); return; }
       if (d.cmd === 'MSG') { addMessage(d.text, 'them'); return; }
 
@@ -1169,6 +1193,97 @@
       }
 
       if (tttBoard.every(cell => cell !== '')) {
+    // --- COUPLE TIC-TAC-TOE (❤️ vs 💋) LOGIC ---
+    let tttBoard = Array(9).fill('');
+    let isMyTurn = false;
+    let mySymbol = '❤️';
+    let friendSymbol = '💋';
+    let isGameOver = false;
+
+    const WIN_PATTERNS = [
+      [0,1,2], [3,4,5], [6,7,8],
+      [0,3,6], [1,4,7], [2,5,8],
+      [0,4,8], [2,4,6]
+    ];
+
+    function startCoupleGame(notifyPeer = true, hostStarts = null) {
+      document.getElementById('chatLogs').style.display = 'none';
+      document.getElementById('chatInputRow').style.display = 'none';
+      document.getElementById('openGameBtn').style.display = 'none';
+      document.getElementById('gameContainer').style.display = 'flex';
+      document.getElementById('chatCardTitle').innerText = '❤️ vs 💋 Game';
+
+      mySymbol = isHost ? '❤️' : '💋';
+      friendSymbol = isHost ? '💋' : '❤️';
+
+      const starterIsHost = (hostStarts !== null) ? hostStarts : (Math.random() < 0.5);
+      resetCoupleGame(false, starterIsHost);
+
+      if (notifyPeer && conn && conn.open) {
+        conn.send({ cmd: 'GAME_START', hostStarts: starterIsHost });
+        showToast('🎮 Game started with friend!');
+      } else if (!notifyPeer) {
+        showToast('🎮 Friend started a game!');
+      }
+    }
+
+    function resetCoupleGame(notifyPeer = true, hostStarts = null) {
+      tttBoard = Array(9).fill('');
+      isGameOver = false;
+
+      const starterIsHost = (hostStarts !== null) ? hostStarts : (Math.random() < 0.5);
+      isMyTurn = isHost ? starterIsHost : !starterIsHost;
+      updateGameUI();
+
+      if (notifyPeer && conn && conn.open) {
+        conn.send({ cmd: 'GAME_RESET', hostStarts: starterIsHost });
+      }
+    }
+
+    function exitCoupleGame(notifyPeer = true) {
+      document.getElementById('gameContainer').style.display = 'none';
+      document.getElementById('chatLogs').style.display = 'flex';
+      document.getElementById('chatInputRow').style.display = 'flex';
+      document.getElementById('openGameBtn').style.display = 'inline-block';
+      document.getElementById('chatCardTitle').innerText = 'Live Chat';
+
+      if (notifyPeer && conn && conn.open) {
+        conn.send({ cmd: 'GAME_EXIT' });
+      }
+      showToast('💬 Back to Live Chat');
+    }
+
+    function makeGameMove(index) {
+      if (isGameOver || !isMyTurn || tttBoard[index] !== '') return;
+
+      tttBoard[index] = mySymbol;
+      isMyTurn = false;
+      checkGameStatus(mySymbol);
+      updateGameUI();
+
+      if (conn && conn.open) {
+        conn.send({ cmd: 'GAME_MOVE', index: index, symbol: mySymbol });
+      }
+    }
+
+    function applyRemoteMove(index, symbol) {
+      tttBoard[index] = symbol;
+      isMyTurn = true;
+      checkGameStatus(symbol);
+      updateGameUI();
+    }
+
+    function checkGameStatus(lastSymbol) {
+      const won = WIN_PATTERNS.some(p => p.every(idx => tttBoard[idx] === lastSymbol));
+      const statusEl = document.getElementById('gameStatus');
+
+      if (won) {
+        isGameOver = true;
+        statusEl.innerText = (lastSymbol === mySymbol) ? `🎉 You Won! (${mySymbol})` : `😍 Friend Won! (${friendSymbol})`;
+        return;
+      }
+
+      if (tttBoard.every(cell => cell !== '')) {
         isGameOver = true;
         statusEl.innerText = '🤝 Draw Match! Click Restart';
         return;
@@ -1187,59 +1302,45 @@
       }
     }
 
-    // --- PRIVACY, SCREENSHOT, TAB SWITCH & TAB CLOSE ALERTS ---
+    // --- TAB SWITCH, TAB CLOSE & SCREENSHOT ALERTS ---
+    let isClosingTab = false;
 
-    // 1. Disable right-click
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-    // 2. Notify friend immediately if user closes or cuts the tab
-    window.addEventListener('beforeunload', () => {
+    function notifyTabClose() {
+      isClosingTab = true;
       if (conn && conn.open) {
         conn.send({ cmd: 'TAB_CLOSED' });
       }
-    });
+    }
+    window.addEventListener('pagehide', notifyTabClose);
+    window.addEventListener('beforeunload', notifyTabClose);
 
-    // 3. Tab switch detection
     document.addEventListener('visibilitychange', () => {
+      if (!conn || !conn.open || isClosingTab) return;
+
       if (document.hidden) {
-        document.body.classList.add('privacy-lock');
-        showToast('⚠️ Tab switched!', true);
-        if (conn && conn.open) conn.send({ cmd: 'TAB_ALERT' });
+        conn.send({ cmd: 'TAB_ALERT' });
       } else {
-        document.body.classList.remove('privacy-lock');
+        conn.send({ cmd: 'TAB_BACK' });
       }
     });
 
-    // 4. Blur screen when window loses focus
-    window.addEventListener('blur', () => {
-      document.body.classList.add('privacy-lock');
-    });
-
-    window.addEventListener('focus', () => {
-      document.body.classList.remove('privacy-lock');
-    });
-
-    // 5. Screenshot key detection (PrintScreen)
+    // Screenshot Key Detection
     window.addEventListener('keyup', (e) => {
       if (e.key === 'PrintScreen') {
-        document.body.classList.add('privacy-lock');
         if (navigator.clipboard) navigator.clipboard.writeText('');
-        showToast('📸 Screenshots are not allowed!', true);
         if (conn && conn.open) conn.send({ cmd: 'SCREENSHOT_ALERT' });
-        setTimeout(() => document.body.classList.remove('privacy-lock'), 3000);
+        showToast('📸 Screenshot detected!', true);
       }
     });
 
-    // 6. Snipping tool and shortcut prevention
     window.addEventListener('keydown', (e) => {
       if ((e.metaKey && e.shiftKey && (e.key === 's' || e.key === 'S' || e.key === '3' || e.key === '4')) ||
           ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 's' || e.key === 'u'))) {
-        e.preventDefault();
-        document.body.classList.add('privacy-lock');
-        showToast('📸 Screenshots are not allowed!', true);
         if (conn && conn.open) conn.send({ cmd: 'SCREENSHOT_ALERT' });
+        showToast('📸 Screenshot shortcut detected!', true);
       }
     });
+
     
   </script>
 </body>
