@@ -341,19 +341,19 @@
       .ttt-grid { max-width: 210px; gap: 8px; }
       .ttt-cell { font-size: 28px; }
     }
-       /* FORCE ALL TOAST NOTIFICATIONS TO SOLID BLACK */
-    #toast, .toast, .toast.error, .toast.warn {
+    /* 1. 100% SOLID BLACK NOTIFICATIONS (FORCE OVERRIDE) */
+    div#toast, div.toast, .toast, .toast.error, .toast.warn, .toast-notification {
       background: #121212 !important;
       color: #ffffff !important;
       border: 1px solid #2d2d2d !important;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35) !important;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5) !important;
     }
 
-    /* TYPING BUBBLE */
+    /* 2. ULTRA-SMOOTH FLOATING INSTAGRAM TYPING BUBBLE */
     .typing-bubble {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       padding: 10px 14px !important;
       width: fit-content;
       align-self: flex-start;
@@ -365,17 +365,24 @@
       height: 6px;
       background-color: currentColor;
       border-radius: 50%;
-      opacity: 0.5;
-      animation: instaBounce 1.4s infinite ease-in-out both;
+      opacity: 0.4;
+      will-change: transform, opacity;
+      animation: smoothFloat 1.2s infinite cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-    .typing-dot:nth-child(3) { animation-delay: 0s; }
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.3s; }
 
-    @keyframes instaBounce {
-      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-      40% { transform: translateY(-4px); opacity: 1; }
-                       }
+    @keyframes smoothFloat {
+      0%, 60%, 100% {
+        transform: translateY(0) translateZ(0);
+        opacity: 0.4;
+      }
+      30% {
+        transform: translateY(-6px) translateZ(0);
+        opacity: 1;
+      }
+    }
     
   </style>
 </head>
@@ -1049,11 +1056,11 @@
       { e: '🫠', k: 'melting shy' }, { e: '🤭', k: 'giggle oops' },
       { e: '🫡', k: 'salute respect' }, { e: '🤨', k: 'suspect doubt' },
       { e: '😎', k: 'cool sunglasses' }, { e: '🥳', k: 'party celebrate' },
-      { e: '😡', k: 'angry mad' }, { e: '🤬', k: 'swear angry' },
-      { e: '😱', k: 'shock scream' }, { e: '😴', k: 'sleep tired' },
+      { e: '😡', k: 'angry mad' },
+      { e: '🫵', k: 'you' }, { e: '😴', k: 'sleep tired' },
       { e: '🤔', k: 'think hmm' }, { e: '🙄', k: 'eyeroll whatever' },
       { e: '😒', k: 'unamused sad' }, { e: '😔', k: 'sad pensive' },
-      { e: '🤯', k: 'mindblown shock' }, { e: '🤩', k: 'starstruck wow' },
+      { e: '🙂', k: 'mindblown shock' }, { e: '🤩', k: 'starstruck wow' },
       { e: '😜', k: 'wink crazy tongue' }, { e: '🤪', k: 'zany crazy' },
       { e: '😇', k: 'angel innocent' }, { e: '💀', k: 'skull dead funny' },
       { e: '👻', k: 'ghost spooky' }, { e: '👍', k: 'thumbs up ok' },
@@ -1063,10 +1070,10 @@
       { e: '🤞', k: 'fingers crossed luck' }, { e: '👀', k: 'eyes look' },
       { e: '💔', k: 'broken heart sad' }, { e: '💯', k: '100 perfect' },
       { e: '🎉', k: 'party popper' }, { e: '🎶', k: 'music song notes' },
-      { e: '🍿', k: 'popcorn movie watch' }
+      { e: '🫣', k: 'blush' }
     ];
 
-    let recentEmojis = ['😂', '❤️', '😚', '💋', '🔥', '🥺', '😍'];
+    let recentEmojis = ['😘', '❤️', '😚', '💋', '🔥', '🥺', '😍'];
 
     function renderEmojis(filterText = '') {
       const mainGrid = document.getElementById('mainEmojiGrid');
@@ -1161,9 +1168,9 @@
 
       if (notifyPeer && conn && conn.open) {
         conn.send({ cmd: 'GAME_START', hostStarts: starterIsHost });
-        showToast('🎮 Game started with friend!');
+        showToast('Game started with friend!');
       } else if (!notifyPeer) {
-        showToast('🎮 Friend started a game!');
+        showToast('Friend started a game!');
       }
     }
 
@@ -1185,12 +1192,12 @@
       document.getElementById('chatLogs').style.display = 'flex';
       document.getElementById('chatInputRow').style.display = 'flex';
       document.getElementById('openGameBtn').style.display = 'inline-block';
-      document.getElementById('chatCardTitle').innerText = 'Live Chat';
+      document.getElementById('chatCardTitle').innerText = 'Chat';
 
       if (notifyPeer && conn && conn.open) {
         conn.send({ cmd: 'GAME_EXIT' });
       }
-      showToast('💬 Back to Chat');
+      showToast('Back to Chat 💬');
     }
 
     function makeGameMove(index) {
