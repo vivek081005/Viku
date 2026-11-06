@@ -443,7 +443,6 @@
         </div>
 
         <!-- Chat Card -->
-                <!-- Chat Card -->
         <div class="card chat-card" id="chatCard">
           <div class="chat-header">
             <div class="title" id="chatCardTitle">Live Chat</div>
@@ -804,6 +803,7 @@
       if (d.cmd === 'GAME_MOVE') { applyRemoteMove(d.index, d.symbol); return; }
       if (d.cmd === 'GAME_RESET') { resetCoupleGame(false); return; }
       if (d.cmd === 'GAME_EXIT') { exitCoupleGame(false); return; }
+      
       if (d.cmd === 'FRIEND_LEFT') { handleFriendDisconnect(); return; }
       if (d.cmd === 'MSG') { addMessage(d.text, 'them'); return; }
 
