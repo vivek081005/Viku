@@ -262,26 +262,44 @@
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5) !important;
     }
  /* HOST-ONLY DIWALI BUTTON & FULLSCREEN SURPRISE UI */
-    #openGameBtn, .game-toggle-btn {
-      display: none; /* Default hidden: JS sirf Host ke liye on karega */
+        #openGameBtn, .game-toggle-btn {
+      display: none;
       background: #121212;
-      color: #fde68a;
-      border: 1px solid rgba(253, 230, 138, 0.4);
+      color: #ffffff;
+      border: 1px solid #2d2d2d;
       padding: 6px 14px;
-      border-radius: 20px;
+      border-radius: 8px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      box-shadow: none !important;
+      text-shadow: none !important;
+      transition: background 0.2s ease, border-color 0.2s ease;
     }
     #openGameBtn:hover, .game-toggle-btn:hover {
-      background: #1e1b18;
-      border-color: #fde047;
-      transform: translateY(-1px);
+      background: #1f1f1f;
+      border-color: #404040;
+      transform: none;
     }
 
-    /* Purana Tic-Tac-Toe Game Box hamesha ke liye chhupa de */
+    .diwali-main-heading {
+      font-family: 'Caveat', cursive;
+      font-size: clamp(42px, 7vw, 80px);
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: none !important;
+    }
+    .diwali-sub-heading {
+      font-family: 'Caveat', cursive;
+      font-size: clamp(22px, 3vw, 34px);
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+      margin-top: 6px;
+      text-shadow: none !important;
+        }
+    
+
+    /* Remove old game*/
     #gameContainer, .game-container {
       display: none !important;
     }
@@ -350,19 +368,6 @@
       transform: translateX(-50%) translateY(0);
     }
 
-    .diwali-main-heading {
-      font-family: 'Caveat', cursive;
-      font-size: clamp(42px, 7vw, 80px);
-      font-weight: 700;
-      color: #fffbeb;
-      text-shadow: 0 4px 24px rgba(251, 191, 36, 0.35);
-    }
-    .diwali-sub-heading {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: clamp(13px, 1.6vw, 18px);
-      color: rgba(255, 255, 255, 0.85);
-      margin-top: 4px;
-    }
     
 
     /* 2. ULTRA-SMOOTH FLOATING INSTAGRAM TYPING BUBBLE */
@@ -1171,7 +1176,7 @@
       const btn = document.getElementById('openGameBtn') || document.querySelector('.game-toggle-btn');
       if (!btn) return;
 
-      btn.innerText = 'Celebrate Diwali ✨';
+      btn.innerText = 'Celebrate Diwali';
       btn.onclick = (e) => {
         e.preventDefault();
         startDiwaliSurprise(true);
